@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ error: 'Invalid verification type' }, { status: 400 });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Verification error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

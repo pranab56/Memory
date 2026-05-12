@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
 
     // Create user (unverified)
-    const newUser = await User.create({
+    await User.create({
       username,
       email,
       passwordHash,
@@ -69,8 +69,9 @@ export async function POST(req: NextRequest) {
       },
       { status: 201 }
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Signup error:', err);
-    return NextResponse.json({ error: 'Internal server error: ' + err.message }, { status: 500 });
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return NextResponse.json({ error: 'Internal server error: ' + message }, { status: 500 });
   }
 }

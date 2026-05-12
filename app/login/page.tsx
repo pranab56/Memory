@@ -65,30 +65,10 @@ export default function LoginPage() {
   if (!mounted) return null;
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'var(--bg-primary)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      position: 'relative',
-      overflow: 'hidden'
-    }}>
-      <div style={{
-        width: '100%', maxWidth: '420px', padding: '0 24px',
-        animation: 'fadeIn 0.5s ease forwards'
-      }}>
-        <div style={{
-          background: 'var(--bg-card)',
-          border: '1px solid var(--border)',
-          borderRadius: '20px',
-          padding: '36px',
-          boxShadow: '0 24px 48px rgba(0,0,0,0.4)',
-        }}>
-          <h2 style={{
-            fontSize: '16px', fontWeight: '600', color: 'var(--text-primary)',
-            marginBottom: '24px', letterSpacing: '-0.2px'
-          }}>
+    <div className="auth-shell">
+      <div className="auth-inner">
+        <div className="auth-card">
+          <h2 className="auth-title">
             Sign in to continue
           </h2>
 
@@ -120,11 +100,18 @@ export default function LoginPage() {
                 value={username}
                 onChange={e => setUsername(e.target.value)}
                 placeholder="admin or email@example.com"
+                autoComplete="username"
                 style={{
-                  width: '100%', padding: '12px 16px', borderRadius: '10px',
-                  background: 'var(--bg-secondary)', border: errors.username ? '1px solid #ef4444' : '1px solid var(--border)',
-                  color: 'var(--text-primary)', fontSize: '14px', outline: 'none',
-                  transition: 'all 0.2s', fontFamily: 'var(--font-sans)',
+                  width: '100%',
+                  minHeight: '48px',
+                  padding: '12px 16px',
+                  borderRadius: '12px',
+                  background: 'var(--bg-secondary)',
+                  border: errors.username ? '1px solid #ef4444' : '1px solid var(--border)',
+                  color: 'var(--text-primary)',
+                  outline: 'none',
+                  transition: 'all 0.2s',
+                  fontFamily: 'var(--font-sans)',
                 }}
               />
               {errors.username && (
@@ -144,20 +131,37 @@ export default function LoginPage() {
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   placeholder="••••••••"
+                  autoComplete="current-password"
                   style={{
-                    width: '100%', padding: '12px 16px', paddingRight: '46px', borderRadius: '10px',
-                    background: 'var(--bg-secondary)', border: errors.password ? '1px solid #ef4444' : '1px solid var(--border)',
-                    color: 'var(--text-primary)', fontSize: '14px', outline: 'none',
-                    transition: 'all 0.2s', fontFamily: 'var(--font-sans)',
+                    width: '100%',
+                    minHeight: '48px',
+                    padding: '12px 52px 12px 16px',
+                    borderRadius: '12px',
+                    background: 'var(--bg-secondary)',
+                    border: errors.password ? '1px solid #ef4444' : '1px solid var(--border)',
+                    color: 'var(--text-primary)',
+                    outline: 'none',
+                    transition: 'all 0.2s',
+                    fontFamily: 'var(--font-sans)',
                   }}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                   style={{
-                    position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
-                    background: 'none', border: 'none', cursor: 'pointer', padding: '4px',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                    position: 'absolute',
+                    right: '8px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    minWidth: '44px',
+                    minHeight: '44px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
                   {showPassword ? (
@@ -188,21 +192,34 @@ export default function LoginPage() {
               type="submit"
               disabled={loading}
               style={{
-                width: '100%', padding: '13px', borderRadius: '10px',
+                width: '100%',
+                minHeight: '52px',
+                padding: '14px',
+                borderRadius: '12px',
                 background: loading ? 'var(--border)' : 'linear-gradient(135deg, var(--accent) 0%, #a855f7 100%)',
-                border: 'none', color: 'white', fontSize: '14px', fontWeight: '600',
+                border: 'none',
+                color: 'white',
+                fontSize: '15px',
+                fontWeight: '600',
                 cursor: loading ? 'not-allowed' : 'pointer',
-                transition: 'all 0.2s', fontFamily: 'var(--font-sans)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                transition: 'all 0.2s',
+                fontFamily: 'var(--font-sans)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
                 boxShadow: loading ? 'none' : '0 4px 24px var(--accent-glow)',
-                marginBottom: '16px'
+                marginBottom: '16px',
               }}
             >
               {loading ? 'Authenticating...' : 'Access Dashboard'}
             </button>
             
-            <p style={{ textAlign: 'center', fontSize: '14px', color: 'var(--text-secondary)' }}>
-              Don't have an account? <Link href="/signup" style={{ color: 'var(--accent)', fontWeight: '500' }}>Sign up</Link>
+            <p style={{ textAlign: 'center', fontSize: 'clamp(13px, 3.2vw, 14px)', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+              Don&apos;t have an account?{' '}
+              <Link href="/signup" style={{ color: 'var(--accent)', fontWeight: '500', padding: '4px' }}>
+                Sign up
+              </Link>
             </p>
           </form>
         </div>

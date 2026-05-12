@@ -48,27 +48,14 @@ function ResetPasswordContent() {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'var(--bg-primary)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '24px'
-    }}>
-      <div style={{
-        width: '100%', maxWidth: '420px',
-        background: 'var(--bg-card)',
-        border: '1px solid var(--border)',
-        borderRadius: '24px',
-        padding: '40px',
-        boxShadow: '0 24px 48px rgba(0,0,0,0.4)',
-      }}>
-        <h2 style={{ fontSize: '24px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '12px' }}>
+    <div className="auth-shell">
+      <div className="auth-inner">
+        <div className="auth-card">
+        <h2 className="auth-title" style={{ fontSize: 'clamp(20px, 5vw, 24px)', marginBottom: '12px' }}>
           Set new password
         </h2>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '15px', marginBottom: '32px' }}>
-          Please choose a strong password you haven't used before.
+        <p style={{ color: 'var(--text-secondary)', fontSize: 'clamp(14px, 3.5vw, 15px)', marginBottom: '28px', lineHeight: 1.5 }}>
+          Please choose a strong password you haven&apos;t used before.
         </p>
 
         {error && (
@@ -93,19 +80,36 @@ function ResetPasswordContent() {
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="••••••••"
+                autoComplete="new-password"
                 style={{
-                  width: '100%', padding: '14px 16px', paddingRight: '46px', borderRadius: '12px',
-                  background: 'var(--bg-secondary)', border: '1px solid var(--border)',
-                  color: 'var(--text-primary)', fontSize: '15px', outline: 'none'
+                  width: '100%',
+                  minHeight: '48px',
+                  padding: '14px 52px 14px 16px',
+                  borderRadius: '12px',
+                  background: 'var(--bg-secondary)',
+                  border: '1px solid var(--border)',
+                  color: 'var(--text-primary)',
+                  outline: 'none',
+                  fontFamily: 'var(--font-sans)',
                 }}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
                 style={{
-                  position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
-                  background: 'none', border: 'none', cursor: 'pointer', padding: '4px',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  position: 'absolute',
+                  right: '8px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  minWidth: '44px',
+                  minHeight: '44px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
                 {showPassword ? (
@@ -133,10 +137,17 @@ function ResetPasswordContent() {
               value={confirmPassword}
               onChange={e => setConfirmPassword(e.target.value)}
               placeholder="••••••••"
+              autoComplete="new-password"
               style={{
-                width: '100%', padding: '14px 16px', borderRadius: '12px',
-                background: 'var(--bg-secondary)', border: '1px solid var(--border)',
-                color: 'var(--text-primary)', fontSize: '15px', outline: 'none'
+                width: '100%',
+                minHeight: '48px',
+                padding: '14px 16px',
+                borderRadius: '12px',
+                background: 'var(--bg-secondary)',
+                border: '1px solid var(--border)',
+                color: 'var(--text-primary)',
+                outline: 'none',
+                fontFamily: 'var(--font-sans)',
               }}
             />
           </div>
@@ -145,16 +156,25 @@ function ResetPasswordContent() {
             type="submit"
             disabled={loading}
             style={{
-              width: '100%', padding: '14px', borderRadius: '12px',
+              width: '100%',
+              minHeight: '52px',
+              padding: '14px',
+              borderRadius: '12px',
               background: 'linear-gradient(135deg, var(--accent) 0%, #a855f7 100%)',
-              border: 'none', color: 'white', fontSize: '16px', fontWeight: '600',
-              cursor: loading ? 'not-allowed' : 'pointer', transition: 'all 0.2s',
-              boxShadow: '0 4px 20px var(--accent-glow)'
+              border: 'none',
+              color: 'white',
+              fontSize: '16px',
+              fontWeight: '600',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              transition: 'all 0.2s',
+              fontFamily: 'var(--font-sans)',
+              boxShadow: '0 4px 20px var(--accent-glow)',
             }}
           >
             {loading ? 'Updating...' : 'Reset Password'}
           </button>
         </form>
+        </div>
       </div>
     </div>
   );
@@ -162,7 +182,13 @@ function ResetPasswordContent() {
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense
+      fallback={
+        <div className="auth-shell" style={{ color: 'var(--text-secondary)' }}>
+          Loading…
+        </div>
+      }
+    >
       <ResetPasswordContent />
     </Suspense>
   );

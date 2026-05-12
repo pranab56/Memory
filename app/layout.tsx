@@ -1,23 +1,27 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
+import { DM_Sans, Instrument_Serif } from 'next/font/google';
 import './globals.css';
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: '#0a0a0f',
+  colorScheme: 'dark',
+};
 
 export const metadata: Metadata = {
   title: 'Media Vault — Admin Dashboard',
   description: 'Professional media upload and management dashboard',
 };
 
+const fontSans = DM_Sans({ subsets: ['latin'], variable: '--font-sans', display: 'swap' });
+const fontSerif = Instrument_Serif({ subsets: ['latin'], variable: '--font-serif', display: 'swap', weight: '400' });
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300&family=Instrument+Serif:ital@0;1&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body className="antialiased">{children}</body>
+      <body className={`${fontSans.variable} ${fontSerif.variable} antialiased`}>{children}</body>
     </html>
   );
 }

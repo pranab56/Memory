@@ -97,23 +97,9 @@ function VerifyOtpContent() {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'var(--bg-primary)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '24px'
-    }}>
-      <div style={{
-        width: '100%', maxWidth: '440px',
-        background: 'var(--bg-card)',
-        border: '1px solid var(--border)',
-        borderRadius: '24px',
-        padding: '40px',
-        boxShadow: '0 24px 48px rgba(0,0,0,0.4)',
-        textAlign: 'center'
-      }}>
+    <div className="auth-shell">
+      <div className="auth-inner auth-inner--wide">
+      <div className="otp-page-card">
         <div style={{
           width: '64px', height: '64px', background: 'var(--accent-muted)',
           borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -125,11 +111,11 @@ function VerifyOtpContent() {
           </svg>
         </div>
 
-        <h2 style={{ fontSize: '24px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '12px' }}>
+        <h2 style={{ fontSize: 'clamp(20px, 5vw, 24px)', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '12px', lineHeight: 1.25 }}>
           Verify your email
         </h2>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '15px', marginBottom: '32px' }}>
-          We've sent a 6-digit code to <span style={{ color: 'var(--text-primary)', fontWeight: '600' }}>{email}</span>
+        <p style={{ color: 'var(--text-secondary)', fontSize: 'clamp(14px, 3.5vw, 15px)', marginBottom: '28px', lineHeight: 1.5, wordBreak: 'break-word' }}>
+          We&apos;ve sent a 6-digit code to <span style={{ color: 'var(--text-primary)', fontWeight: '600' }}>{email}</span>
         </p>
 
         {error && (
@@ -145,23 +131,24 @@ function VerifyOtpContent() {
         )}
 
         <form onSubmit={handleVerify}>
-          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginBottom: '32px' }}>
+          <div className="otp-inputs">
             {otp.map((digit, index) => (
               <input
                 key={index}
                 id={`otp-${index}`}
                 type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
                 value={digit}
                 onChange={(e) => handleChange(index, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(index, e)}
-                style={{
-                  width: '48px', height: '56px', borderRadius: '12px',
-                  background: 'var(--bg-secondary)', border: '1px solid var(--border)',
-                  color: 'var(--text-primary)', fontSize: '20px', fontWeight: '700',
-                  textAlign: 'center', outline: 'none', transition: 'all 0.2s'
+                aria-label={`Digit ${index + 1}`}
+                onFocus={(e) => {
+                  e.target.style.borderColor = 'var(--accent)';
                 }}
-                onFocus={(e) => e.target.style.borderColor = 'var(--accent)'}
-                onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
+                onBlur={(e) => {
+                  e.target.style.borderColor = 'var(--border)';
+                }}
               />
             ))}
           </div>
@@ -170,30 +157,48 @@ function VerifyOtpContent() {
             type="submit"
             disabled={loading}
             style={{
-              width: '100%', padding: '14px', borderRadius: '12px',
+              width: '100%',
+              minHeight: '52px',
+              padding: '14px',
+              borderRadius: '12px',
               background: 'linear-gradient(135deg, var(--accent) 0%, #a855f7 100%)',
-              border: 'none', color: 'white', fontSize: '16px', fontWeight: '600',
-              cursor: loading ? 'not-allowed' : 'pointer', transition: 'all 0.2s',
-              boxShadow: '0 4px 20px var(--accent-glow)', marginBottom: '24px'
+              border: 'none',
+              color: 'white',
+              fontSize: '16px',
+              fontWeight: '600',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              transition: 'all 0.2s',
+              fontFamily: 'var(--font-sans)',
+              boxShadow: '0 4px 20px var(--accent-glow)',
+              marginBottom: '24px',
             }}
           >
             {loading ? 'Verifying...' : 'Verify Account'}
           </button>
         </form>
 
-        <p style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
-          Didn't receive the code?{' '}
+        <p style={{ fontSize: 'clamp(13px, 3.2vw, 14px)', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+          Didn&apos;t receive the code?{' '}
           <button
+            type="button"
             onClick={resendOtp}
             disabled={loading}
             style={{
-              background: 'none', border: 'none', color: 'var(--accent)',
-              fontWeight: '600', cursor: 'pointer', padding: '0'
+              background: 'none',
+              border: 'none',
+              color: 'var(--accent)',
+              fontWeight: '600',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              padding: '8px 4px',
+              minHeight: '44px',
+              fontFamily: 'var(--font-sans)',
+              fontSize: 'inherit',
             }}
           >
             Resend OTP
           </button>
         </p>
+      </div>
       </div>
     </div>
   );
@@ -201,7 +206,13 @@ function VerifyOtpContent() {
 
 export default function VerifyOtpPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense
+      fallback={
+        <div className="auth-shell" style={{ color: 'var(--text-secondary)' }}>
+          Loading…
+        </div>
+      }
+    >
       <VerifyOtpContent />
     </Suspense>
   );
