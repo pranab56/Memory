@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useGetMediaQuery } from '@/lib/redux/api/mediaApi';
 import UploadZone from '@/components/upload/UploadZone';
 import MediaCard from '@/components/media/MediaCard';
+import MediaCarousel from '@/components/media/MediaCarousel';
 import Toast from '@/components/ui/Toast';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useToasts } from '@/hooks/useToasts';
@@ -38,6 +39,7 @@ export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<'gallery' | 'upload'>('gallery');
   const [selectedMonth, setSelectedMonth] = useState<string>('');
   const [selectedYear, setSelectedYear] = useState<string>('');
+  const [carouselIndex, setCarouselIndex] = useState<number | null>(null);
   const search = useDebouncedValue(searchInput, 400);
   const { toasts, addToast, removeToast } = useToasts();
 
@@ -242,7 +244,13 @@ export default function DashboardPage() {
                 ))}
               </div>
 
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <div className="filter-controls-group">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginRight: '4px' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                  <span style={{ fontSize: '11px', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Timeline</span>
+                </div>
                 <select
                   value={selectedMonth}
                   onChange={(e) => setSelectedMonth(e.target.value)}
@@ -346,6 +354,7 @@ export default function DashboardPage() {
                     key={item._id}
                     item={item}
                     onDelete={handleDelete}
+                    onView={() => setCarouselIndex(i)}
                     baseURL={BASE_URL}
                     index={i}
                   />
@@ -439,6 +448,15 @@ export default function DashboardPage() {
           <Toast key={t.id} message={t.message} type={t.type} onClose={() => removeToast(t.id)} />
         ))}
       </div>
+      {carouselIndex !== null && (
+        <MediaCarousel
+          items={media}
+          currentIndex={carouselIndex}
+          onClose={() => setCarouselIndex(null)}
+          onNavigate={setCarouselIndex}
+          baseURL={BASE_URL}
+        />
+      )}
     </div>
   );
 }
