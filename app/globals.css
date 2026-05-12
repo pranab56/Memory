@@ -443,6 +443,25 @@ select {
   color: var(--accent);
 }
 
+.filter-select {
+  padding: 10px 14px;
+  min-height: var(--touch-min);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  font-family: var(--font-sans);
+  outline: none;
+}
+
+.filter-select:focus {
+  border-color: var(--accent);
+}
+
 .filter-meta {
   display: flex;
   align-items: center;

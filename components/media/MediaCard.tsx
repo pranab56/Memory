@@ -3,19 +3,19 @@
 import { useState } from 'react';
 import type { MediaItem } from '@/modules/media/types';
 import { formatBytes, formatDate } from '@/utils/format';
+import { useDeleteMediaMutation } from '@/lib/redux/api/mediaApi';
 
 interface MediaCardProps {
   item: MediaItem;
   onDelete: (id: string) => void;
   baseURL: string;
-  token: string | null;
   index: number;
 }
 
-export default function MediaCard({ item, onDelete, baseURL, token, index }: MediaCardProps) {
-  const [deleting, setDeleting] = useState(false);
+export default function MediaCard({ item, onDelete, baseURL, index }: MediaCardProps) {
   const [imgError, setImgError] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteMedia, { isLoading: deleting }] = useDeleteMediaMutation();
 
   const filePath = item.image || item.video;
   const isExternal = filePath?.startsWith('http');
@@ -23,16 +23,28 @@ export default function MediaCard({ item, onDelete, baseURL, token, index }: Med
   const isImage = item.type === 'image';
 
   const handleDelete = async () => {
-    setDeleting(true);
     try {
-      await fetch(`/api/media/${item._id}`, {
-        method: 'DELETE',
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
+      await deleteMedia(item._id).unwrap();
       onDelete(item._id);
     } catch {
-      setDeleting(false);
       setShowDeleteConfirm(false);
+    }
+  };
+
+  const handleDownload = async () => {
+    try {
+      const response = await fetch(mediaUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = item.originalName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Download failed:', err);
     }
   };
 
@@ -218,6 +230,27 @@ export default function MediaCard({ item, onDelete, baseURL, token, index }: Med
               <line x1="10" y1="14" x2="21" y2="3" stroke="currentColor" strokeWidth="2"/>
             </svg>
           </a>
+          {/* Download button */}
+          <button
+            type="button"
+            onClick={handleDownload}
+            title="Download"
+            aria-label="Download media"
+            style={{
+              minWidth: '44px', minHeight: '44px', display: 'flex', alignItems: 'center',
+              justifyContent: 'center', borderRadius: '8px', border: 'none', background: 'transparent',
+              color: 'var(--text-muted)', transition: 'color 0.2s',
+              cursor: 'pointer',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent)')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              <polyline points="7 10 12 15 17 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <line x1="12" y1="15" x2="12" y2="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+          </button>
         </div>
       </div>
     </div>

@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { formatBytes } from '@/utils/format';
 import { MAX_UPLOAD_FILE_BYTES, MAX_UPLOAD_FILE_LABEL } from '@/lib/upload/limits';
+import { useUploadMediaMutation } from '@/lib/redux/api/mediaApi';
 
 interface UploadFile {
   id: string;
@@ -15,7 +16,6 @@ interface UploadFile {
 
 interface UploadZoneProps {
   onUploadComplete: () => void;
-  token: string | null;
 }
 
 function FileIcon({ type }: { type: string }) {
@@ -42,10 +42,10 @@ function FileIcon({ type }: { type: string }) {
   );
 }
 
-export default function UploadZone({ onUploadComplete, token }: UploadZoneProps) {
+export default function UploadZone({ onUploadComplete }: UploadZoneProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [files, setFiles] = useState<UploadFile[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
+  const [uploadMedia, { isLoading: isUploading }] = useUploadMediaMutation();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const addFiles = useCallback((newFiles: File[]) => {
@@ -93,7 +93,6 @@ export default function UploadZone({ onUploadComplete, token }: UploadZoneProps)
   const uploadAll = async () => {
     const pending = files.filter(f => f.status === 'pending');
     if (!pending.length) return;
-    setIsUploading(true);
 
     // Upload in batches of 5
     const batchSize = 5;
@@ -107,24 +106,8 @@ export default function UploadZone({ onUploadComplete, token }: UploadZoneProps)
         batch.find(b => b.id === f.id) ? { ...f, status: 'uploading', progress: 10 } : f
       ));
 
-      // Simulate progress
-      const progressInterval = setInterval(() => {
-        setFiles(prev => prev.map(f =>
-          batch.find(b => b.id === f.id) && f.progress < 85
-            ? { ...f, progress: f.progress + Math.random() * 15 }
-            : f
-        ));
-      }, 300);
-
       try {
-        const res = await fetch('/api/upload', {
-          method: 'POST',
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-          body: formData,
-        });
-
-        clearInterval(progressInterval);
-        const data = await res.json();
+        const data = await uploadMedia(formData).unwrap();
 
         if (data.success) {
           setFiles(prev => prev.map(f =>
@@ -133,21 +116,20 @@ export default function UploadZone({ onUploadComplete, token }: UploadZoneProps)
         } else {
           setFiles(prev => prev.map(f =>
             batch.find(b => b.id === f.id)
-              ? { ...f, status: 'error', error: data.error || 'Upload failed' }
+              ? { ...f, status: 'error', error: 'Upload failed' }
               : f
           ));
         }
-      } catch {
-        clearInterval(progressInterval);
+      } catch (err) {
+        const errorData = err as { data?: { error?: string } };
         setFiles(prev => prev.map(f =>
           batch.find(b => b.id === f.id)
-            ? { ...f, status: 'error', error: 'Network error' }
+            ? { ...f, status: 'error', error: errorData.data?.error || 'Network error' }
             : f
         ));
       }
     }
 
-    setIsUploading(false);
     onUploadComplete();
   };
 

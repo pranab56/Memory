@@ -2,28 +2,64 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { useGetMediaQuery } from '@/lib/redux/api/mediaApi';
 import UploadZone from '@/components/upload/UploadZone';
 import MediaCard from '@/components/media/MediaCard';
 import Toast from '@/components/ui/Toast';
-import type { MediaItem } from '@/modules/media/types';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useToasts } from '@/hooks/useToasts';
 import { formatBytes } from '@/utils/format';
 
 const BASE_URL = typeof window !== 'undefined' ? window.location.origin : '';
+const MONTHS = [
+  { value: '1', label: 'January' },
+  { value: '2', label: 'February' },
+  { value: '3', label: 'March' },
+  { value: '4', label: 'April' },
+  { value: '5', label: 'May' },
+  { value: '6', label: 'June' },
+  { value: '7', label: 'July' },
+  { value: '8', label: 'August' },
+  { value: '9', label: 'September' },
+  { value: '10', label: 'October' },
+  { value: '11', label: 'November' },
+  { value: '12', label: 'December' },
+];
+
+const YEARS = Array.from({ length: 5 }, (_, i) => (new Date().getFullYear() - i).toString());
+
 const DASHBOARD_TAB_STORAGE_KEY = 'memory_dashboard_active_tab';
 
 export default function DashboardPage() {
   const router = useRouter();
   const [token, setToken] = useState<string | null>(null);
-  const [media, setMedia] = useState<MediaItem[]>([]);
-  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'image' | 'video'>('all');
   const [searchInput, setSearchInput] = useState('');
   const [activeTab, setActiveTab] = useState<'gallery' | 'upload'>('gallery');
-  const [stats, setStats] = useState({ total: 0, images: 0, videos: 0, size: 0 });
+  const [selectedMonth, setSelectedMonth] = useState<string>('');
+  const [selectedYear, setSelectedYear] = useState<string>('');
   const search = useDebouncedValue(searchInput, 400);
   const { toasts, addToast, removeToast } = useToasts();
+
+  // Fetch current filtered media
+  const { data, isLoading, refetch } = useGetMediaQuery({
+    type: filter === 'all' ? undefined : filter,
+    search: search || undefined,
+    month: selectedMonth ? parseInt(selectedMonth) : undefined,
+    year: selectedYear ? parseInt(selectedYear) : undefined,
+    limit: 100
+  });
+
+  // Fetch all media for stats
+  const { data: allData } = useGetMediaQuery({ limit: 1000 });
+
+  const media = data?.media || [];
+  const stats = {
+    total: allData?.media.length || 0,
+    images: allData?.media.filter(i => i.type === 'image').length || 0,
+    videos: allData?.media.filter(i => i.type === 'video').length || 0,
+    size: allData?.media.reduce((acc, i) => acc + (i.size || 0), 0) || 0,
+  };
 
   useEffect(() => {
     const t = localStorage.getItem('media_auth_token');
@@ -43,59 +79,9 @@ export default function DashboardPage() {
     localStorage.setItem(DASHBOARD_TAB_STORAGE_KEY, activeTab);
   }, [activeTab]);
 
-  const fetchMedia = useCallback(
-    async (t?: string | null) => {
-      const authToken = t ?? token;
-      if (!authToken) return;
-      setLoading(true);
-      try {
-        const params = new URLSearchParams();
-        if (filter !== 'all') params.set('type', filter);
-        if (search) params.set('search', search);
-        params.set('limit', '100');
-
-        const res = await fetch(`/api/media?${params}`, {
-          headers: { Authorization: `Bearer ${authToken}` },
-        });
-        if (res.status === 401) {
-          router.push('/login');
-          return;
-        }
-        const data = await res.json();
-        if (data.success) {
-          setMedia(data.media);
-          const allRes = await fetch('/api/media?limit=1000', {
-            headers: { Authorization: `Bearer ${authToken}` },
-          });
-          const allData = await allRes.json();
-          if (allData.success) {
-            const items: MediaItem[] = allData.media;
-            setStats({
-              total: items.length,
-              images: items.filter((i) => i.type === 'image').length,
-              videos: items.filter((i) => i.type === 'video').length,
-              size: items.reduce((acc, i) => acc + (i.size || 0), 0),
-            });
-          }
-        }
-      } catch {
-        addToast('Failed to load media', 'error');
-      } finally {
-        setLoading(false);
-      }
-    },
-    [token, filter, search, router, addToast],
-  );
-
-  useEffect(() => {
-    const t = localStorage.getItem('media_auth_token');
-    if (t) fetchMedia(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter, search]);
-
   const handleDelete = useCallback(
-    (id: string) => {
-      setMedia((prev) => prev.filter((m) => m._id !== id));
+    () => {
+      // The mutation in MediaCard will handle the actual deletion and tag invalidation
       addToast('Media deleted successfully', 'success');
     },
     [addToast],
@@ -104,8 +90,8 @@ export default function DashboardPage() {
   const handleUploadComplete = useCallback(() => {
     addToast('Upload complete!', 'success');
     setActiveTab('gallery');
-    setTimeout(() => fetchMedia(), 500);
-  }, [addToast, fetchMedia]);
+    // RTK Query will automatically refetch because the upload mutation invalidates the 'Media' tag
+  }, [addToast]);
 
   const handleLogout = async () => {
     await fetch('/api/auth', { method: 'DELETE' });
@@ -256,6 +242,35 @@ export default function DashboardPage() {
                 ))}
               </div>
 
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <select
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                  className="filter-select"
+                  aria-label="Filter by month"
+                >
+                  <option value="">All Months</option>
+                  {MONTHS.map((m) => (
+                    <option key={m.value} value={m.value}>
+                      {m.label}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(e.target.value)}
+                  className="filter-select"
+                  aria-label="Filter by year"
+                >
+                  <option value="">All Years</option>
+                  {YEARS.map((y) => (
+                    <option key={y} value={y}>
+                      {y}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <div className="filter-meta">
                 <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                   {media.length} result{media.length !== 1 ? 's' : ''}
@@ -263,7 +278,7 @@ export default function DashboardPage() {
                 <button
                   type="button"
                   className="filter-refresh"
-                  onClick={() => fetchMedia()}
+                  onClick={() => refetch()}
                   title="Refresh"
                   aria-label="Refresh gallery"
                 >
@@ -279,7 +294,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {loading ? (
+            {isLoading ? (
               <div className="media-grid">
                 {Array(12)
                   .fill(0)
@@ -332,7 +347,6 @@ export default function DashboardPage() {
                     item={item}
                     onDelete={handleDelete}
                     baseURL={BASE_URL}
-                    token={token}
                     index={i}
                   />
                 ))}
@@ -351,7 +365,7 @@ export default function DashboardPage() {
             </div>
 
             <div className="upload-card-shell">
-              <UploadZone onUploadComplete={handleUploadComplete} token={token} />
+              <UploadZone onUploadComplete={handleUploadComplete} />
             </div>
 
             <div className="upload-tips-grid">

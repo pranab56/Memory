@@ -15,6 +15,8 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const type = searchParams.get('type'); // 'image' | 'video' | null
     const search = searchParams.get('search') || '';
+    const month = searchParams.get('month');
+    const year = searchParams.get('year');
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '50');
     const skip = (page - 1) * limit;
@@ -22,7 +24,26 @@ export async function GET(req: NextRequest) {
     const query: Record<string, unknown> = { uploadedBy: username };
     if (type && ['image', 'video'].includes(type)) query.type = type;
     if (search) {
-      query.originalName = { $regex: search, $options: 'i' };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      query.originalName = { $regex: search, $options: 'i' } as any;
+    }
+
+    // Month & Year filtering
+    if (year) {
+      const y = parseInt(year);
+      if (month) {
+        const m = parseInt(month);
+        const start = new Date(y, m - 1, 1);
+        const end = new Date(y, m, 1);
+        query.uploadedAt = { $gte: start, $lt: end };
+      } else {
+        const start = new Date(y, 0, 1);
+        const end = new Date(y + 1, 0, 1);
+        query.uploadedAt = { $gte: start, $lt: end };
+      }
+    } else if (month) {
+      const m = parseInt(month);
+      query.$expr = { $eq: [{ $month: '$uploadedAt' }, m] };
     }
 
     const [media, total] = await Promise.all([

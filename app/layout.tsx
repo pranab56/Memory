@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next';
 import { DM_Sans, Instrument_Serif } from 'next/font/google';
 import './globals.css';
 
+import { ReduxProvider } from '@/components/providers/ReduxProvider';
+
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
@@ -21,7 +23,11 @@ const fontSerif = Instrument_Serif({ subsets: ['latin'], variable: '--font-serif
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${fontSans.variable} ${fontSerif.variable} antialiased`}>{children}</body>
+      <body className={`${fontSans.variable} ${fontSerif.variable} antialiased`}>
+        <ReduxProvider>
+          {children}
+        </ReduxProvider>
+      </body>
     </html>
   );
 }
