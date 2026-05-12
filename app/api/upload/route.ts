@@ -57,9 +57,11 @@ export async function POST(req: NextRequest) {
 
         // Use Vercel Blob if token is present (Vercel environment)
         if (process.env.BLOB_READ_WRITE_TOKEN) {
-          const blob = await put(file.name, file, {
+          const fileBuffer = await file.arrayBuffer();
+          const blob = await put(file.name, fileBuffer, {
             access: 'public',
             addRandomSuffix: true,
+            contentType: file.type,
           });
           fileUrl = blob.url;
           filename = blob.pathname;
@@ -98,9 +100,13 @@ export async function POST(req: NextRequest) {
         });
 
         savedMedia.push(mediaDoc);
-      } catch (fileErr) {
+      } catch (fileErr: unknown) {
         console.error(`Error processing file ${file.name}:`, fileErr);
-        errors.push({ name: file.name, error: 'Failed to process file' });
+        const error = fileErr as Error;
+        errors.push({ 
+          name: file.name, 
+          error: error.message || 'Failed to process file' 
+        });
       }
     }
 

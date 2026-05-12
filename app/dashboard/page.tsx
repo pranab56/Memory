@@ -33,7 +33,6 @@ const DASHBOARD_TAB_STORAGE_KEY = 'memory_dashboard_active_tab';
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [token, setToken] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'image' | 'video'>('all');
   const [searchInput, setSearchInput] = useState('');
   const [activeTab, setActiveTab] = useState<'gallery' | 'upload'>('gallery');
@@ -67,9 +66,7 @@ export default function DashboardPage() {
     const t = localStorage.getItem('media_auth_token');
     if (!t) {
       router.push('/login');
-      return;
     }
-    setToken(t);
   }, [router]);
 
   useEffect(() => {
