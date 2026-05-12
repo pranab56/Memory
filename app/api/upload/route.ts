@@ -11,7 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 export const runtime = 'nodejs';
 /** Allow long uploads on hosted platforms (e.g. Vercel); adjust per plan */
-export const maxDuration = 3600;
+export const maxDuration = 60;
 
 // Ensure upload dirs exist
 const UPLOAD_BASE = path.join(process.cwd(), 'uploads');
