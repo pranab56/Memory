@@ -18,7 +18,8 @@ export default function MediaCard({ item, onDelete, baseURL, token, index }: Med
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const filePath = item.image || item.video;
-  const mediaUrl = filePath ? `${baseURL}/api/files${filePath}` : '';
+  const isExternal = filePath?.startsWith('http');
+  const mediaUrl = filePath ? (isExternal ? filePath : `${baseURL}/api/files${filePath}`) : '';
   const isImage = item.type === 'image';
 
   const handleDelete = async () => {

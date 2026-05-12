@@ -9,17 +9,11 @@ import path from 'path';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 
+import { put } from '@vercel/blob';
+
 export const runtime = 'nodejs';
 /** Allow long uploads on hosted platforms (e.g. Vercel); adjust per plan */
 export const maxDuration = 60;
-
-// Ensure upload dirs exist
-const UPLOAD_BASE = path.join(process.cwd(), 'uploads');
-const IMAGE_DIR = path.join(UPLOAD_BASE, 'images');
-const VIDEO_DIR = path.join(UPLOAD_BASE, 'videos');
-[UPLOAD_BASE, IMAGE_DIR, VIDEO_DIR].forEach((d) => {
-  if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
-});
 
 export async function POST(req: NextRequest) {
   const username = getAuthenticatedUser(req);
@@ -58,34 +52,45 @@ export async function POST(req: NextRequest) {
           continue;
         }
 
-        const ext = path.extname(file.name).toLowerCase();
-        const uniqueName = `${uuidv4()}${ext}`;
-        const destDir = isImage ? IMAGE_DIR : VIDEO_DIR;
-        const filePath = path.join(destDir, uniqueName);
-        const relativePath = isImage ? `/images/${uniqueName}` : `/videos/${uniqueName}`;
+        let fileUrl = '';
+        let filename = '';
 
-        const webStream = file.stream();
-        const nodeReadable = Readable.fromWeb(webStream as Parameters<typeof Readable.fromWeb>[0]);
-        const writeStream = fs.createWriteStream(filePath);
+        // Use Vercel Blob if token is present (Vercel environment)
+        if (process.env.BLOB_READ_WRITE_TOKEN) {
+          const blob = await put(file.name, file, {
+            access: 'public',
+            addRandomSuffix: true,
+          });
+          fileUrl = blob.url;
+          filename = blob.pathname;
+        } else {
+          // Fallback to local storage (Local development)
+          const UPLOAD_BASE = path.join(process.cwd(), 'uploads');
+          const IMAGE_DIR = path.join(UPLOAD_BASE, 'images');
+          const VIDEO_DIR = path.join(UPLOAD_BASE, 'videos');
+          [UPLOAD_BASE, IMAGE_DIR, VIDEO_DIR].forEach((d) => {
+            if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
+          });
 
-        try {
+          const ext = path.extname(file.name).toLowerCase();
+          const uniqueName = `${uuidv4()}${ext}`;
+          const destDir = isImage ? IMAGE_DIR : VIDEO_DIR;
+          const filePath = path.join(destDir, uniqueName);
+          
+          fileUrl = isImage ? `/images/${uniqueName}` : `/videos/${uniqueName}`;
+          filename = uniqueName;
+
+          const webStream = file.stream();
+          const nodeReadable = Readable.fromWeb(webStream as Parameters<typeof Readable.fromWeb>[0]);
+          const writeStream = fs.createWriteStream(filePath);
           await pipeline(nodeReadable, writeStream);
-        } catch (pipeErr) {
-          if (fs.existsSync(filePath)) {
-            try {
-              fs.unlinkSync(filePath);
-            } catch {
-              /* ignore */
-            }
-          }
-          throw pipeErr;
         }
 
         const mediaDoc = await Media.create({
           type: isImage ? 'image' : 'video',
-          image: isImage ? relativePath : null,
-          video: isVideo ? relativePath : null,
-          filename: uniqueName,
+          image: isImage ? fileUrl : null,
+          video: isVideo ? fileUrl : null,
+          filename: filename,
           originalName: file.name,
           size: file.size,
           mimeType: file.type,
