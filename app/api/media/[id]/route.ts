@@ -4,6 +4,7 @@ import connectDB from '@/lib/db/mongoose';
 import Media from '@/models/Media';
 import path from 'path';
 import fs from 'fs';
+import { deleteFromSupabase } from '@/lib/supabase';
 
 export async function DELETE(
   req: NextRequest,
@@ -22,12 +23,16 @@ export async function DELETE(
       return NextResponse.json({ error: 'Media not found' }, { status: 404 });
     }
 
-    // Delete file from disk
+    // Delete file from storage
     const filePath = media.image || media.video;
     if (filePath) {
-      const fullPath = path.join(process.cwd(), 'uploads', filePath);
-      if (fs.existsSync(fullPath)) {
-        fs.unlinkSync(fullPath);
+      if (filePath.startsWith('http')) {
+        await deleteFromSupabase(filePath);
+      } else {
+        const fullPath = path.join(process.cwd(), 'uploads', filePath);
+        if (fs.existsSync(fullPath)) {
+          fs.unlinkSync(fullPath);
+        }
       }
     }
 

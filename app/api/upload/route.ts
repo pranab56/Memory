@@ -8,8 +8,8 @@ import { MAX_UPLOAD_FILE_BYTES, MAX_UPLOAD_FILE_LABEL } from '@/lib/upload/limit
 import path from 'path';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
-
 import { put } from '@vercel/blob';
+import { uploadToSupabase } from '@/lib/supabase';
 
 export const runtime = 'nodejs';
 /** Allow long uploads on hosted platforms (e.g. Vercel); adjust per plan */
@@ -55,8 +55,15 @@ export async function POST(req: NextRequest) {
         let fileUrl = '';
         let filename = '';
 
-        // Use Vercel Blob if token is present (Vercel environment)
-        if (process.env.BLOB_READ_WRITE_TOKEN) {
+        // Prioritize Supabase Storage
+        if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+          const fileBuffer = await file.arrayBuffer();
+          const uploadResult = await uploadToSupabase(fileBuffer, file.name, file.type);
+          fileUrl = uploadResult.url;
+          filename = uploadResult.path;
+        }
+        // Use Vercel Blob if token is present
+        else if (process.env.BLOB_READ_WRITE_TOKEN) {
           const fileBuffer = await file.arrayBuffer();
           const blob = await put(file.name, fileBuffer, {
             access: 'public',
